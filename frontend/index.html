@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Corn Yield Prediction</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f4f4f4;
+      --card:#ffffff;
+      --border:#d9d9d9;
+      --text:#1c1c1c;
+      --muted:#666;
+      --green:#4caf50;
+      --red:#d32f2f;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 16px;
+      color: var(--text);
+    }
+    .card {
+      max-width: 720px;
+      margin: 0 auto;
+      background: var(--card);
+      padding: 16px 16px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 22px;
+      text-align: center;
+      margin: 6px 0 6px 0;
+      font-weight: 800;
+    }
+    #subtitleText{
+      text-align:center;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 10px 0;
+    }
+
+    .lang-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 8px 0 8px 0;
+      flex-wrap: wrap;
+    }
+    .lang-btn {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      cursor: pointer;
+      background: #fff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .lang-btn.active {
+      background: var(--green);
+      color: #fff;
+      border-color: var(--green);
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 640px){
+      .grid{ grid-template-columns: 1fr; }
+      body{ padding: 12px; }
+      .card{ padding: 14px; }
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+    .field{
+      margin-top: 2px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-sizing: border-box;
+      background: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, select:focus{
+      border-color: #9ccc9f;
+      box-shadow: 0 0 0 3px rgba(76,175,80,0.15);
+    }
+    .hint{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn-row{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (max-width: 420px){
+      .btn-row{ grid-template-columns: 1fr; }
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #resetBtn {
+      background: var(--red);
+    }
+    button:disabled {
+      opacity: 0.75;
+      cursor: default;
+    }
+
+    .error-box{
+      display:none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fff4f4;
+      border: 1px solid #ffd1d1;
+      color: #9b1c1c;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+    #yieldText {
+      font-size: 26px;
+      font-weight: 900;
+      margin: 10px 0 12px 0;
+    }
+    .factor {
+      font-size: 15px;
+      margin: 6px 0;
+    }
+    .pill{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .pill.pos{ background:#e9f7ec; color:#1b7a2a; border:1px solid #c9ead1; }
+    .pill.neg{ background:#fff0f0; color:#a01919; border:1px solid #ffd0d0; }
+    .pill.zero{ background:#f3f3f3; color:#444; border:1px solid #e2e2e2; }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h1 id="titleText">🌽 Corn Yield Prediction</h1>
+
+  <div class="lang-buttons">
+    <button type="button" class="lang-btn active" data-lang="en">ENGLISH</button>
+    <button type="button" class="lang-btn" data-lang="si">සිංහල</button>
+    <button type="button" class="lang-btn" data-lang="ta">தமிழ்</button>
+  </div>
+
+  <p id="subtitleText">(Corn yield prediction system)</p>
+
+  <form id="yieldForm">
+    <div class="grid">
+      <div>
+        <label id="labelDistrict">District</label>
+        <div class="field">
+          <select id="district">
+            <option>Monaragala</option>
+            <option>Anuradhapura</option>
+            <option>Polonnaruwa</option>
+            <option>Kurunegala</option>
+            <option>Badulla</option>
+            <option>Ampara</option>
+          </select>
+        </div>
+        <div class="hint" id="hintDistrict"></div>
+      </div>
+
+      <div>
+        <label id="labelVariety">Variety</label>
+        <div class="field">
+          <select id="variety">
+            <option>Hybrid_A</option>
+            <option>Hybrid_B</option>
+            <option>OPV_Local</option>
+          </select>
+        </div>
+        <div class="hint" id="hintVariety"></div>
+      </div>
+
+      <div>
+        <label id="labelFarmSize">Farm size (acres)</label>
+        <div class="field">
+          <input type="number" step="0.1" id="farmSize" value="0" min="0" placeholder="e.g., 2.5" required />
+        </div>
+        <div class="hint" id="hintFarmSize"></div>
+      </div>
+
+      <div>
+        <label id="labelRainfall">Seasonal rainfall (mm)</label>
+        <div class="field">
+          <input type="number" step="1" id="rainfall" value="0" min="0" placeholder="e.g., 900" required />
+        </div>
+        <div class="hint" id="hintRainfall"></div>
+      </div>
+
+      <div>
+        <label id="labelFertilizer">Fertilizer (kg/acre)</label>
+        <div class="field">
+          <input type="number" step="1" id="fertilizer" value="0" min="0" placeholder="e.g., 120" required />
+        </div>
+        <div class="hint" id="hintFertilizer"></div>
+      </div>
+
+      <div>
+        <label id="labelPrevYield">Previous yield (kg/acre)</label>
+        <div class="field">
+          <input type="number" step="1" id="prevYield" value="0" min="0" placeholder="e.g., 2600" required />
+        </div>
+        <div class="hint" id="hintPrevYield"></div>
+      </div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="btn-row">
+      <button type="submit" id="submitBtn">Predict Yield</button>
+      <button type="button" id="resetBtn">Reset</button>
+    </div>
+  </form>
+
+  <div class="result" id="resultArea" style="display:none;">
+    <h3 id="resultHeading">Result</h3>
+    <p id="yieldText"></p>
+    <h4 id="factorsHeading">Main contributing factors:</h4>
+    <div id="factors"></div>
+    <div id="shapChart" style="width:100%;height:320px;margin-top:12px;"></div>
+  </div>
+</div>
+
+<script>
+  // ---------- UI LABEL TRANSLATIONS ----------
+  const translations = {
+    en: {
+      title: "🌽 Corn Yield Prediction",
+      subtitle: "(Corn yield prediction system)",
+      district: "District",
+      variety: "Variety",
+      farmSize: "Farm size (acres)",
+      rainfall: "Seasonal rainfall (mm)",
+      fertilizer: "Fertilizer (kg/acre)",
+      prevYield: "Previous yield (kg/acre)",
+      predictBtn: "Predict Yield",
+      resetBtn: "Reset",
+      resultHeading: "Result",
+      factorsHeading: "Main contributing factors:",
+      yieldSentence: (v) => `Predicted yield: ${v} kg/acre`,
+      loadingText: "Predicting...",
+      effectIncrease: "increases yield",
+      effectDecrease: "reduces yield",
+      effectNone: "no effect on yield",
+      errorTitle: "Please fix these issues:",
+      errNegative: (label) => `${label} cannot be negative.`,
+      errNaN: (label) => `${label} must be a number.`,
+      errFarmZero: "Farm size should be greater than 0 (recommended)."
+    },
+    si: {
+      title: "🌽 ඉරිඟු අස්වැන්න පුරෝකථනය",
+      subtitle: "(අස්වැන්න පුරෝකථන පද්ධතිය)",
+      district: "දිස්ත්‍රික්කය",
+      variety: "බීජ වර්ගය",
+      farmSize: "ක්ෂේත්‍ර විස්තීර්ණය (අක්කර)",
+      rainfall: "වාර වැසි (මි.මී.)",
+      fertilizer: "පොහොර (කි.ග්./අක්කර)",
+      prevYield: "පෙර අස්වැන්න (කි.ග්./අක්කර)",
+      predictBtn: "අස්වැන්න පුරෝකථන කරන්න",
+      resetBtn: "නැවත සැකසන්න",
+      resultHeading: "ප්‍රතිඵලය",
+      factorsHeading: "ප්‍රධාන දායක සාධක:",
+      yieldSentence: (v) => `පිළිබඳ අස්වැන්න: ${v} kg/acre`,
+      loadingText: "ගණනය වෙමින්...",
+      effectIncrease: "අස්වැන්න වැඩි කරයි",
+      effectDecrease: "අස්වැන්න අඩු කරයි",
+      effectNone: "අස්වැන්නට බලපෑමක් නොවේ",
+      errorTitle: "මෙම දෝෂ සකස් කරන්න:",
+      errNegative: (label) => `${label} ඍණ විය නොහැක.`,
+      errNaN: (label) => `${label} අංකයක් විය යුතුය.`,
+      errFarmZero: "ක්ෂේත්‍ර විස්තීර්ණය 0 ට වඩා වැඩි වීම සුදුසුය."
+    },
+    ta: {
+      title: "🌽 சோளம் விளைச்சல் கணிப்பு",
+      subtitle: "(விளைச்சல் கணிப்பு அமைப்பு)",
+      district: "மாவட்டம்",
+      variety: "விதை வகை",
+      farmSize: "நிலப் பரப்பளவு (ஏக்கர்)",
+      rainfall: "பருவமழை (மிமீ)",
+      fertilizer: "உர (கிலோ/ஏக்கர்)",
+      prevYield: "முந்தைய விளைச்சல் (கிலோ/ஏக்கர்)",
+      predictBtn: "விளைச்சல் கணிக்க",
+      resetBtn: "மீட்டமை",
+      resultHeading: "விளைவு",
+      factorsHeading: "முக்கிய காரணிகள்:",
+      yieldSentence: (v) => `எதிர்பார்க்கப்படும் விளைச்சல்: ${v} kg/acre`,
+      loadingText: "கணக்கிடுகிறது...",
+      effectIncrease: "விளைச்சலை அதிகரிக்கிறது",
+      effectDecrease: "விளைச்சலை குறைக்கிறது",
+      effectNone: "விளைச்சலுக்கு பாதிப்பு இல்லை",
+      errorTitle: "இந்த பிழைகளை சரிசெய்யவும்:",
+      errNegative: (label) => `${label} எதிர்மறையாக இருக்க முடியாது.`,
+      errNaN: (label) => `${label} ஒரு எண்ணாக இருக்க வேண்டும்.`,
+      errFarmZero: "நிலப் பரப்பளவு 0-ஐ விட அதிகமாக இருப்பது நல்லது."
+    }
+  };
+
+  // ---------- FEATURE NAME TRANSLATIONS ----------
+  const featureNameTranslations = {
+    en: {
+      "Seasonal rainfall (mm)": "Seasonal rainfall (mm)",
+      "Pest/disease level": "Pest/disease level",
+      "Average temperature (°C)": "Average temperature (°C)",
+      "Planting density (plants/acre)": "Planting density (plants/acre)",
+      "Soil type": "Soil type",
+      "Soil type sandy": "Soil type sandy",
+      "Variety: Hybrid A": "Variety: Hybrid A",
+      "Variety: Hybrid B": "Variety: Hybrid B",
+      "Variety: OPV Local": "Variety: OPV Local"
+    },
+    si: {
+      "Seasonal rainfall (mm)": "වාර වැසි (මි.මී.)",
+      "Pest/disease level": "පළිබෝධ / රෝග තත්ත්වය",
+      "Average temperature (°C)": "සාමාන්‍ය උෂ්ණත්වය (°C)",
+      "Planting density (plants/acre)": "පැළ දැමීමේ ඝනත්වය (පැළ/අක්කර)",
+      "Soil type": "පස් වර්ගය",
+      "Soil type sandy": "වැලි පස් වර්ගය",
+      "Variety: Hybrid A": "වර්ගය: Hybrid A",
+      "Variety: Hybrid B": "වර්ගය: Hybrid B",
+      "Variety: OPV Local": "වර්ගය: OPV දේශීය"
+    },
+    ta: {
+      "Seasonal rainfall (mm)": "பருவமழை (மிமீ)",
+      "Pest/disease level": "பூச்சி / நோய் நிலை",
+      "Average temperature (°C)": "சராசரி வெப்பநிலை (°C)",
+      "Planting density (plants/acre)": "நட்டு அடர்த்தி (தாவரங்கள்/ஏக்கர்)",
+      "Soil type": "மண் வகை",
+      "Soil type sandy": "மண் வகை மணல்",
+      "Variety: Hybrid A": "வகை: Hybrid A",
+      "Variety: Hybrid B": "வகை: Hybrid B",
+      "Variety: OPV Local": "வகை: OPV Local"
+    }
+  };
+
+  function translateFeatureName(name, lang) {
+    const dict = featureNameTranslations[lang] || featureNameTranslations.en;
+    if (dict[name]) return dict[name];
+    for (const base in dict) {
+      if (name.startsWith(base)) {
+        return (dict[base] || base) + name.slice(base.length);
+      }
+    }
+    return name;
+  }
+
+  const shapAxisTitles = {
+    en: "SHAP value (impact on yield)",
+    si: "SHAP අගය (අස්වැන්න මත ඇති බලපෑම)",
+    ta: "SHAP மதிப்பு (விளைச்சலின் தாக்கம்)"
+  };
+
+  let currentLang = "en";
+
+  function applyLanguage(lang) {
+    const t = translations[lang];
+    document.getElementById("titleText").textContent = t.title;
+    document.getElementById("subtitleText").textContent = t.subtitle;
+
+    document.getElementById("labelDistrict").textContent = t.district;
+    document.getElementById("labelVariety").textContent = t.variety;
+    document.getElementById("labelFarmSize").textContent = t.farmSize;
+    document.getElementById("labelRainfall").textContent = t.rainfall;
+    document.getElementById("labelFertilizer").textContent = t.fertilizer;
+    document.getElementById("labelPrevYield").textContent = t.prevYield;
+
+    document.getElementById("submitBtn").textContent = t.predictBtn;
+    document.getElementById("resetBtn").textContent = t.resetBtn;
+
+    document.getElementById("resultHeading").textContent = t.resultHeading;
+    document.getElementById("factorsHeading").textContent = t.factorsHeading;
+
+    // Hints (placeholders / helper text)
+    document.getElementById("hintDistrict").textContent = "";
+    document.getElementById("hintVariety").textContent = "";
+    document.getElementById("hintFarmSize").textContent = "";
+    document.getElementById("hintRainfall").textContent = "";
+    document.getElementById("hintFertilizer").textContent = "";
+    document.getElementById("hintPrevYield").textContent = "";
+
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.lang === lang);
+    });
+
+    currentLang = lang;
+  }
+
+  document.querySelectorAll(".lang-btn").forEach(btn => {
+    btn.addEventListener("click", () => applyLanguage(btn.dataset.lang));
+  });
+
+  applyLanguage("en");
+
+  // ---------- VALIDATION ----------
+  const errorBox = document.getElementById("errorBox");
+
+  function showErrors(errors) {
+    if (!errors.length) {
+      errorBox.style.display = "none";
+      errorBox.innerHTML = "";
+      return;
+    }
+    const t = translations[currentLang];
+    errorBox.style.display = "block";
+    errorBox.innerHTML = `<b>${t.errorTitle}</b><ul style="margin:8px 0 0 18px;">` +
+      errors.map(e => `<li>${e}</li>`).join("") + `</ul>`;
+  }
+
+  function clampToZero(inputEl){
+    const v = parseFloat(inputEl.value);
+    if (!isNaN(v) && v < 0) inputEl.value = 0;
+  }
+
+  // Instant clamp on negative
+  ["farmSize", "rainfall", "fertilizer", "prevYield"].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener("input", () => clampToZero(el));
+  });
+
+  function validateInputs() {
+    const t = translations[currentLang];
+    const errors = [];
+
+    const farmSize = parseFloat(document.getElementById("farmSize").value);
+    const rainfall = parseFloat(document.getElementById("rainfall").value);
+    const fertilizer = parseFloat(document.getElementById("fertilizer").value);
+    const prevYield = parseFloat(document.getElementById("prevYield").value);
+
+    const checks = [
+      { label: t.farmSize, val: farmSize },
+      { label: t.rainfall, val: rainfall },
+      { label: t.fertilizer, val: fertilizer },
+      { label: t.prevYield, val: prevYield }
+    ];
+
+    for (const c of checks) {
+      if (Number.isNaN(c.val)) errors.push(t.errNaN(c.label));
+      if (!Number.isNaN(c.val) && c.val < 0) errors.push(t.errNegative(c.label));
+    }
+
+    // optional "recommendation" warning
+    if (!Number.isNaN(farmSize) && farmSize === 0) {
+      errors.push(t.errFarmZero);
+    }
+
+    showErrors(errors);
+    return errors.length === 0;
+  }
+
+  // ---------- RESET BUTTON ----------
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    document.getElementById("farmSize").value = "0";
+    document.getElementById("rainfall").value = "0";
+    document.getElementById("fertilizer").value = "0";
+    document.getElementById("prevYield").value = "0";
+    document.getElementById("resultArea").style.display = "none";
+    Plotly.purge("shapChart");
+    showErrors([]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ---------- FORM SUBMIT ----------
+  const form = document.getElementById("yieldForm");
+  const resultArea = document.getElementById("resultArea");
+  const yieldText = document.getElementById("yieldText");
+  const factorsDiv = document.getElementById("factors");
+  const submitBtn = document.getElementById("submitBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Validate before sending
+    if (!validateInputs()) return;
+
+    const t = translations[currentLang];
+    submitBtn.disabled = true;
+    submitBtn.textContent = t.loadingText;
+
+    const payload = {
+      district: document.getElementById("district").value,
+      farm_size_acres: parseFloat(document.getElementById("farmSize").value),
+      variety: document.getElementById("variety").value,
+      seasonal_rainfall_mm: parseFloat(document.getElementById("rainfall").value),
+      fertilizer_kg_per_acre: parseFloat(document.getElementById("fertilizer").value),
+      previous_yield_kg_per_acre: parseFloat(document.getElementById("prevYield").value)
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/predict_yield", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      const rounded = Math.round(data.predicted_yield_kg_per_acre);
+
+      // Result sentence (localized)
+      yieldText.textContent = t.yieldSentence(rounded);
+
+      // Factors list
+      factorsDiv.innerHTML = "";
+      const names = [];
+      const values = [];
+
+      data.top_contributing_features.forEach(f => {
+        const translated = translateFeatureName(f.display_name, currentLang);
+        const impact = f.shap_value;
+
+        let effectText, pillClass;
+        if (impact > 0) {
+          effectText = t.effectIncrease;
+          pillClass = "pos";
+        } else if (impact < 0) {
+          effectText = t.effectDecrease;
+          pillClass = "neg";
+        } else {
+          effectText = t.effectNone;
+          pillClass = "zero";
+        }
+
+        const p = document.createElement("p");
+        p.className = "factor";
+        p.innerHTML = `• ${translated} (${impact.toFixed(1)}) – ${effectText} <span class="pill ${pillClass}">${impact > 0 ? "+" : impact < 0 ? "−" : "0"}</span>`;
+        factorsDiv.appendChild(p);
+
+        names.push(translated);
+        values.push(impact);
+      });
+
+      // Chart
+      const trace = {
+        x: values,
+        y: names,
+        type: "bar",
+        orientation: "h"
+      };
+
+      const layout = {
+        margin: { l: 220, r: 20, t: 10, b: 50 },
+        xaxis: {
+          title: shapAxisTitles[currentLang] || shapAxisTitles.en,
+          tickfont: { size: 14 }
+        },
+        yaxis: {
+          tickfont: { size: 14 }
+        }
+      };
+
+      Plotly.newPlot("shapChart", [trace], layout);
+      resultArea.style.display = "block";
+
+      // Auto-scroll to results
+      resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    } catch (err) {
+      showErrors([currentLang === "si"
+        ? "සර්වර් සම්බන්ධ වීමට නොහැක. Backend එක ධාවනය කර තිබේදැයි පරීක්ෂා කරන්න."
+        : currentLang === "ta"
+          ? "சர்வரை அணுக முடியவில்லை. Backend இயங்குகிறதா என சரிபார்க்கவும்."
+          : "Cannot contact server. Check if the backend is running."]);
+      console.error(err);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = translations[currentLang].predictBtn;
+    }
+  });
+</script>
+
+</body>
+</html>
